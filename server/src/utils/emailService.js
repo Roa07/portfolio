@@ -29,21 +29,36 @@ export const sendContactNotification = async ({ name, email, subject, message })
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: {
-        user,
-        pass,
-      },
-      connectionTimeout: 10000, // 10s connection timeout
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-      tls: {
-        rejectUnauthorized: process.env.NODE_ENV === 'production',
-      },
-    });
+    const isGmail = host === 'smtp.gmail.com' || process.env.EMAIL_SERVICE === 'gmail';
+    
+    const transportOptions = isGmail
+      ? {
+          service: 'gmail',
+          auth: {
+            user,
+            pass,
+          },
+          connectionTimeout: 15000,
+          greetingTimeout: 15000,
+          socketTimeout: 20000,
+        }
+      : {
+          host,
+          port,
+          secure: secure || port === 465,
+          auth: {
+            user,
+            pass,
+          },
+          connectionTimeout: 15000,
+          greetingTimeout: 15000,
+          socketTimeout: 20000,
+          tls: {
+            rejectUnauthorized: process.env.NODE_ENV === 'production',
+          },
+        };
+
+    const transporter = nodemailer.createTransport(transportOptions);
 
     const mailOptions = {
       from: `"${name.replace(/["\r\n]/g, '')} via Portfolio" <${user}>`,
