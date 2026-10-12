@@ -29,30 +29,34 @@ export const sendContactNotification = async ({ name, email, subject, message })
   }
 
   try {
-    const isGmail = host === 'smtp.gmail.com' || process.env.EMAIL_SERVICE === 'gmail';
+    const isGmail = host === 'smtp.gmail.com' || process.env.EMAIL_SERVICE === 'gmail' || user.endsWith('@gmail.com');
     
+    // Cloud environments (Render/AWS/DigitalOcean) block outbound port 587.
+    // Port 465 with direct SSL (secure: true) is universally allowed.
     const transportOptions = isGmail
       ? {
-          service: 'gmail',
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true, // Port 465 requires direct SSL
           auth: {
             user,
             pass,
           },
-          connectionTimeout: 15000,
-          greetingTimeout: 15000,
-          socketTimeout: 20000,
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
         }
       : {
           host,
-          port,
+          port: port || 465,
           secure: secure || port === 465,
           auth: {
             user,
             pass,
           },
-          connectionTimeout: 15000,
-          greetingTimeout: 15000,
-          socketTimeout: 20000,
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
           tls: {
             rejectUnauthorized: process.env.NODE_ENV === 'production',
           },
